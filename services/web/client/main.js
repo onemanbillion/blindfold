@@ -98,8 +98,8 @@ function art(item, mode, big = false) {
   const img = item.image
     ? `<img src="${esc(item.image)}" alt="${esc(item.title)}" loading="${big ? 'eager' : 'lazy'}" referrerpolicy="no-referrer" onerror="this.remove()">`
     : '';
-  const tag = item.tokenId != null ? `<span class="tag">No. ${esc(item.tokenId)}</span>` : '';
-  return `<div class="plinth">${img}<span class="noimg" aria-hidden="true">${esc(item.title.slice(0, 1))}</span>${tag}<span class="mode">${modeLabel(mode)}</span></div>`;
+  const tag = item.tokenId != null ? `<span class="tag">#${esc(item.tokenId)}</span>` : '';
+  return `<div class="plinth">${img}<span class="noimg" aria-hidden="true"></span>${tag}<span class="mode">${modeLabel(mode)}</span></div>`;
 }
 
 // ------------------------------------------------------------------ home
@@ -113,11 +113,11 @@ async function viewHome() {
         <div class="row"><a class="btn" href="#lots">Browse lots</a><a class="btn quiet" href="#/how">How it works</a></div>
       </div>
       <div class="splitter" aria-labelledby="split-title">
-        <h3 id="split-title">Try it: type a bid</h3>
+        <h3 id="split-title">Live example. Type any bid.</h3>
         <div class="amount"><input id="demo-amt" inputmode="decimal" value="1.75" aria-label="Example bid in ZEC"><span>ZEC</span></div>
-        <p class="caption">Your browser splits it into three random numbers, one for each independent keyholder:</p>
+        <p class="caption">Your browser splits it into three random numbers, one per keyholder:</p>
         <div class="keyholders" id="demo-shares"></div>
-        <p class="verdict muted">Any single number is pure noise. The three keyholders compare every bid together and reveal only the winner.</p>
+        <p class="verdict">Each number alone reveals nothing. Together, the keyholders compare bids without reconstructing them and reveal only the winner.</p>
       </div>
     </section>
     <section id="lots">
@@ -126,14 +126,14 @@ async function viewHome() {
         <p>Sandbox lots run the real cryptography with simulated payments.</p>
       </div>
       <div class="lots" id="open-lots"><p class="muted">Loading lots…</p></div>
-      <div class="section-head" style="margin-top:48px"><h2>Recently closed</h2></div>
+      <div class="section-head" style="margin-top:64px"><h2>Recently closed</h2></div>
       <div class="lots" id="closed-lots"></div>
     </section>
     <section class="steps" aria-label="How a sealed bid works">
       <ol>
-        <li><span class="step-num">1</span><h3>Seal</h3><p>Your browser splits your bid into three shares and sends one to each keyholder. A tiny deposit from your own wallet anchors the bid on Zcash.</p></li>
-        <li><span class="step-num">2</span><h3>Compare blind</h3><p>At the closing block, the keyholders run a secure computation over their shares. Out comes one thing: the winning bid and its amount.</p></li>
-        <li><span class="step-num">3</span><h3>Settle in the open</h3><p>The winner pays from any Zcash wallet. Anyone can check the payment matches through the auction's published viewing key.</p></li>
+        <li><span class="step-num">Step 1</span><h3>Seal</h3><p>Your browser splits your bid into three shares and sends one to each keyholder. A tiny deposit from your own wallet anchors the bid on Zcash.</p></li>
+        <li><span class="step-num">Step 2</span><h3>Compare blind</h3><p>At the closing block, the keyholders run a secure computation over their shares. Out comes one thing: the winning bid and its amount.</p></li>
+        <li><span class="step-num">Step 3</span><h3>Settle in the open</h3><p>The winner pays from any Zcash wallet. Anyone can check the payment matches through the auction's published viewing key.</p></li>
       </ol>
     </section>`;
 
@@ -142,10 +142,10 @@ async function viewHome() {
     let zat;
     try { zat = zecToZat(input.value || '0'); } catch { return; }
     const shares = shamirShare(zat);
-    const ops = config.partyOperators || ['Keyholder A', 'Keyholder B', 'Keyholder C'];
+    const ops = config.partyOperators || ['Keyholder 1', 'Keyholder 2', 'Keyholder 3'];
     $('#demo-shares').innerHTML = shares.map((s, i) => `
-      <div class="keyholder live"><span class="dot">${i + 1}</span>
-        <div><div class="share">${s.toString()}</div><div class="who">${esc(ops[i] || `Keyholder ${i + 1}`)} sees only this</div></div></div>`).join('');
+      <div class="keyholder live"><span class="dot">${esc(ops[i] || `Keyholder ${i + 1}`)}</span>
+        <div class="share">${s.toString()}</div></div>`).join('');
   };
   input.addEventListener('input', render);
   render();
@@ -179,7 +179,7 @@ async function viewLot(id) {
       <div>${art(a.item, a.mode, true)}</div>
       <div>
         <div class="crumbs"><a href="#/">Lots</a> / ${esc(a.item.collection)}</div>
-        <h1 style="font-size:clamp(2rem,4.5vw,3.2rem)">${esc(a.item.title)}</h1>
+        <h1 style="font-size:clamp(1.9rem,3.6vw,2.6rem)">${esc(a.item.title)}</h1>
         ${a.item.description ? `<p class="muted">${esc(a.item.description)}</p>` : ''}
         <dl class="facts">
           <div><dt>${a.status === 'open' ? 'Closes' : 'Status'}</dt><dd>${a.status === 'open'
@@ -653,22 +653,25 @@ function viewHow() {
 }
 
 function howDiagram() {
-  return `<svg viewBox="0 0 720 260" role="img" aria-label="A bid is split into three shares, one per keyholder; the keyholders compute the winner together">
-    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a99fc9"/></marker></defs>
-    <g font-family="Atkinson Hyperlegible, sans-serif" font-size="14" fill="#efe8da">
-      <rect x="10" y="100" width="140" height="60" rx="10" fill="#2e2450" stroke="#f4b728" stroke-width="2"/>
-      <text x="80" y="126" text-anchor="middle" font-weight="700">Your browser</text>
-      <text x="80" y="146" text-anchor="middle" fill="#a99fc9" font-size="12">bid: 1.75 ZEC</text>
-      ${[0, 1, 2].map((i) => `
-        <path d="M150 130 C 200 130, 210 ${50 + i * 80}, 262 ${50 + i * 80}" fill="none" stroke="#a99fc9" stroke-width="1.25" marker-end="url(#ar)"/>
-        <rect x="265" y="${25 + i * 80}" width="170" height="50" rx="10" fill="#251c3e" stroke="#3d3163"/>
-        <text x="350" y="${46 + i * 80}" text-anchor="middle" font-weight="700">Keyholder ${i + 1}</text>
-        <text x="350" y="${64 + i * 80}" text-anchor="middle" fill="#a99fc9" font-size="12">sees random noise</text>
-        <path d="M435 ${50 + i * 80} C 480 ${50 + i * 80}, 490 130, 532 130" fill="none" stroke="#a99fc9" stroke-width="1.25" marker-end="url(#ar)"/>`).join('')}
-      <rect x="535" y="95" width="175" height="70" rx="10" fill="#f4b728"/>
-      <text x="622" y="124" text-anchor="middle" font-weight="700" fill="#241a05">Blind comparison</text>
-      <text x="622" y="144" text-anchor="middle" fill="#241a05" font-size="12">reveals only the winner</text>
-    </g></svg>`;
+  const rows = [0, 1, 2].map((i) => {
+    const y = 28 + i * 76;
+    return `
+      <path class="edge" d="M160 128 C 205 128, 215 ${y + 24}, 258 ${y + 24}" marker-end="url(#ar)"/>
+      <rect class="box" x="262" y="${y}" width="184" height="48" rx="8"/>
+      <text class="t" x="280" y="${y + 21}">Keyholder ${i + 1}</text>
+      <text class="t sub" x="280" y="${y + 37}">sees one random share</text>
+      <path class="edge" d="M446 ${y + 24} C 490 ${y + 24}, 500 128, 540 128" marker-end="url(#ar)"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 720 256" role="img" aria-label="A bid is split into three shares, one per keyholder; the keyholders compute the winner together">
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path class="head" d="M0 0L10 5L0 10z"/></marker></defs>
+    <rect class="box" x="10" y="104" width="150" height="48" rx="8"/>
+    <text class="t" x="28" y="125">Your browser</text>
+    <text class="t sub" x="28" y="141">bid split locally</text>
+    ${rows}
+    <rect class="box strong" x="544" y="100" width="166" height="56" rx="8"/>
+    <text class="t inv" x="562" y="124">Blind comparison</text>
+    <text class="t sub" x="562" y="141" style="fill:var(--line-strong)">reveals only the winner</text>
+  </svg>`;
 }
 
 // ------------------------------------------------------------------ router
