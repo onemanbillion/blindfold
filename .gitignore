@@ -5,3 +5,5 @@ services/web/public/app.js
 services/web/public/app.js.map
 .env
 __pycache__/
+public/fonts/
+services/web/public/fonts/

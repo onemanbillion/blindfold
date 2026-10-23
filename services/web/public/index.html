@@ -5,27 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Blindfold · Sealed-bid auctions on Zcash</title>
   <meta name="description" content="Sealed-bid auctions on Zcash where no one sees the bids, not even the auction house. Bids are split between three independent servers and the winner is computed blind.">
-  <meta name="theme-color" content="#1c1530">
+  <meta name="theme-color" content="#f5f6f7" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d0f12" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="preload" href="/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
   <header class="site">
-    <a class="brand" href="#/" aria-label="Blindfold home">
-      <svg viewBox="0 0 40 40" width="30" height="30" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="#F4B728"/><path d="M6 17h28v7H6z" fill="#1C1530"/><circle cx="14" cy="20.5" r="1.6" fill="#F4B728"/><circle cx="26" cy="20.5" r="1.6" fill="#F4B728"/></svg>
-      <span>Blindfold</span>
-    </a>
-    <nav aria-label="Main">
-      <a href="#/">Lots</a>
-      <a href="#/sell">Sell</a>
-      <a href="#/bids">My bids</a>
-      <a href="#/how">How it works</a>
-      <a href="https://github.com/onemanbillion/blindfold" rel="noopener">Source</a>
-    </nav>
+    <div class="bar">
+      <a class="brand" href="#/" aria-label="Blindfold home">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><circle cx="12" cy="12" r="11" fill="currentColor"/><rect x="2" y="10" width="20" height="4.2" style="fill:var(--bg)"/></svg>
+        <span>Blindfold</span>
+      </a>
+      <nav aria-label="Main">
+        <a href="#/">Lots</a>
+        <a href="#/sell">Sell</a>
+        <a href="#/bids">My bids</a>
+        <a href="#/how">How it works</a>
+        <a href="https://github.com/onemanbillion/blindfold" rel="noopener">GitHub</a>
+      </nav>
+    </div>
   </header>
   <main id="main" tabindex="-1"></main>
   <footer class="site">
