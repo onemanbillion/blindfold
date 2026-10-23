@@ -9,6 +9,7 @@ COPY --from=devtool /usr/local/cargo/bin/zcash-devtool /usr/local/bin/zcash-devt
 WORKDIR /app
 COPY packages/core packages/core
 COPY services/web services/web
+COPY scripts scripts
 RUN cd packages/core && npm install --omit=dev --no-audit --no-fund \
  && cd /app/services/web && npm install --no-audit --no-fund && npm run build
 ENV DATA_DIR=/data NODE_ENV=production

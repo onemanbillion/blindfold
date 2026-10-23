@@ -1,4 +1,5 @@
 import { createServer } from 'node:http';
+import { execFile } from 'node:child_process';
 import { readFile, stat } from 'node:fs/promises';
 import { createHash, randomBytes } from 'node:crypto';
 import { extname, join, normalize } from 'node:path';
@@ -197,6 +198,11 @@ async function route(req, res, url) {
     if (!process.env.ADMIN_TOKEN || req.headers.authorization !== `Bearer ${process.env.ADMIN_TOKEN}`) throw new HttpError(403, 'admin only');
     return send(res, 200, await createTestnetWallet());
   }
+  if (req.method === 'POST' && p === '/api/admin/selftest') {
+    if (!process.env.ADMIN_TOKEN || req.headers.authorization !== `Bearer ${process.env.ADMIN_TOKEN}`) throw new HttpError(403, 'admin only');
+    const out = await runSelftest();
+    return send(res, out.ok ? 200 : 500, out);
+  }
 
   if ((g = m(/^\/api\/auctions\/([a-z0-9]+)(\/.*)?$/))) {
     const a = getAuction(g[1]);
@@ -278,6 +284,14 @@ async function serveStatic(res, pathname) {
   res.end(data);
 }
 
+/** Operator self-test: run the sandbox end-to-end script against this deployment. */
+function runSelftest() {
+  const script = fileURLToPath(new URL('../../../scripts/e2e-sandbox.mjs', import.meta.url));
+  return new Promise((resolve) => execFile(process.execPath, [script],
+    { env: { ...process.env, BASE: `http://127.0.0.1:${PORT}` }, timeout: 280_000 },
+    (err, stdout, stderr) => resolve({ ok: !err, output: `${stdout}${stderr}`.slice(-4000) })));
+}
+
 // ------------------------------------------------------------------ demo lots
 
 function seedSandboxLots() {
@@ -328,4 +342,23 @@ createServer(async (req, res) => {
   seedSandboxLots();
   setInterval(seedSandboxLots, 10 * 60_000);
   startLoop();
+  if (process.env.SELFTEST_ON_BOOT === '1') {
+    setTimeout(async () => {
+      const r = await runSelftest();
+      console.log(`[selftest] ${r.ok ? 'PASSED' : 'FAILED'}\n${r.output}`);
+      if (!watcherOk) return;
+      try {
+        // Watcher check: a throwaway testnet account becomes a real (testnet) auction.
+        const w = await createTestnetWallet();
+        const key = newSellerKey();
+        const res = await fetch(`http://127.0.0.1:${PORT}/api/auctions`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ mode: 'real', item: { collection: 'zkSNARKs', tokenId: 42, description: 'Operator self-test on Zcash testnet.' },
+            sellerPublicKey: key.publicKey, sellerAddress: w.address, viewingKey: w.ufvk, durationBlocks: 48 }),
+        });
+        const d = await res.json();
+        console.log(`[selftest] testnet auction ${res.ok ? d.auction.id : 'FAILED'} ${res.ok ? `birthday ${d.auction.startHeight}` : d.error}`);
+      } catch (err) { console.log('[selftest] watcher FAILED', err.message); }
+    }, 15_000);
+  }
 });
