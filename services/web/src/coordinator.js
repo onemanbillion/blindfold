@@ -167,8 +167,16 @@ function ingest(a, wallet) {
   walletSummaries.set(a.id, { tip: wallet.tip, refunds: { count: refundCount, totalZat: String(refunds) }, syncedAt: now() });
 }
 
-export async function setUpWallet(id, ufvk) {
-  return initWallet(id, ufvk);
+/**
+ * Load a viewing key into a fresh view-only wallet and return the current chain tip.
+ * The wallet's birthday sits a little below the tip, so we sync once to learn the tip itself.
+ */
+export async function setUpWallet(id, ufvk, net) {
+  const { birthday } = await initWallet(id, ufvk);
+  await syncWallet(id, net);
+  const tip = readWallet(id)?.tip || birthday;
+  setTip(net, tip);
+  return { birthday, tip };
 }
 
 const syncing = new Set();
