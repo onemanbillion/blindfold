@@ -25,21 +25,38 @@ export const watcherAvailable = () =>
 
 /** Operator self-test: confirm each network's lightwalletd servers answer, and log the result. */
 async function probeServers() {
+  // Raw network check first, so a failure below can be told apart from a light-client problem.
+  const { lookup } = await import('node:dns/promises');
+  const tls = await import('node:tls');
+  for (const host of ['zec.rocks', 'testnet.zec.rocks']) {
+    const t0 = Date.now();
+    try {
+      const addrs = await lookup(host, { all: true });
+      const alpn = await new Promise((resolve, reject) => {
+        const sock = tls.connect({ host, port: 443, servername: host, ALPNProtocols: ['h2'], timeout: 15_000 }, () => {
+          resolve(sock.alpnProtocol); sock.end();
+        });
+        sock.on('timeout', () => { sock.destroy(); reject(new Error('timeout')); });
+        sock.on('error', reject);
+      });
+      console.log(`[selftest] net ${host}: ${addrs.map((a) => a.address).join(' ')} tls ok alpn=${alpn} in ${Date.now() - t0} ms`);
+    } catch (err) { console.log(`[selftest] net ${host}: FAILED ${err.message}`); }
+  }
   for (const net of ['main', 'test']) {
     const t0 = Date.now();
     try {
       const w = await createTestnetWallet(net);
       console.log(`[selftest] lightwalletd ${net} (${SERVERS[net]}): ok in ${Date.now() - t0} ms${w.address ? '' : ', no address'}`);
     } catch (err) {
-      console.log(`[selftest] lightwalletd ${net} (${SERVERS[net]}): FAILED after ${Date.now() - t0} ms ${err.message.slice(-300)}`);
+      console.log(`[selftest] lightwalletd ${net} (${SERVERS[net]}): FAILED after ${Date.now() - t0} ms ${err.message.slice(-1500)}`);
     }
   }
 }
 
 function run(args, timeoutMs) {
   return new Promise((resolve, reject) => {
-    execFile(BIN, args, { timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024 }, (err, stdout, stderr) => {
-      if (err) reject(new Error(`zcash-devtool ${args[3] || ''} failed: ${(stderr || err.message).slice(-600)}`));
+    execFile(BIN, args, { timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024, env: { ...process.env, RUST_LOG: process.env.RUST_LOG || 'info' } }, (err, stdout, stderr) => {
+      if (err) reject(new Error(`zcash-devtool ${args[3] || ''} failed: ${(stderr || err.message).slice(-1500)}`));
       else resolve(stdout);
     });
   });
