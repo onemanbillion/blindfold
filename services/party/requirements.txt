@@ -1,0 +1,4 @@
+mpyc==0.11
+gmpy2>=2.2
+fastapi==0.161.1
+uvicorn==0.54.0
