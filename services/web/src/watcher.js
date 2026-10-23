@@ -11,6 +11,9 @@ import { DatabaseSync } from 'node:sqlite';
 import { DATA_DIR } from './db.js';
 
 const BIN = process.env.ZCASH_DEVTOOL || 'zcash-devtool';
+// lightwalletd servers: 'zecrocks', 'ywallet', or a comma-separated host:port list.
+const SERVERS = { main: process.env.LIGHTWALLETD_MAIN || 'zecrocks', test: process.env.LIGHTWALLETD_TEST || 'zecrocks' };
+const serverArgs = (net) => ['-s', SERVERS[net] || 'zecrocks'];
 const WALLETS = join(DATA_DIR, 'wallets');
 mkdirSync(WALLETS, { recursive: true });
 
@@ -39,7 +42,7 @@ export function networkOf(s) {
 export async function initWallet(id, ufvk) {
   const dir = walletDir(id);
   if (existsSync(dir)) rmSync(dir, { recursive: true, force: true });
-  await run(['wallet', '-w', dir, 'init-fvk', '--name', `auction-${id}`, '--fvk', ufvk], 120_000);
+  await run(['wallet', '-w', dir, 'init-fvk', '--name', `auction-${id}`, '--fvk', ufvk, ...serverArgs(networkOf(ufvk))], 120_000);
   const conn = new DatabaseSync(join(dir, 'data.sqlite'), { readOnly: true });
   try {
     const row = conn.prepare('SELECT birthday_height AS h FROM accounts LIMIT 1').get();
@@ -49,20 +52,20 @@ export async function initWallet(id, ufvk) {
   }
 }
 
-/** Operator self-test: a throwaway testnet wallet whose viewing key can seed a test auction. */
-export async function createTestnetWallet() {
-  const id = `selftest-${Date.now()}`;
+/** Operator self-test: a throwaway wallet whose viewing key can seed a test auction. */
+export async function createTestnetWallet(net = 'test') {
+  const id = `selftest-${net}-${Date.now()}`;
   const dir = join(WALLETS, id);
-  await run(['wallet', '-w', dir, 'init', '--name', 'selftest', '-i', join(dir, '..', `${id}.age`), '-n', 'test'], 120_000);
+  await run(['wallet', '-w', dir, 'init', '--name', 'selftest', '-i', join(dir, '..', `${id}.age`), '-n', net, ...serverArgs(net)], 120_000);
   const accounts = await run(['wallet', '-w', dir, 'list-accounts'], 30_000);
   const addresses = await run(['wallet', '-w', dir, 'list-addresses'], 30_000);
-  const ufvk = accounts.match(/(uviewtest1[0-9a-z]+)/)?.[1];
-  const address = addresses.match(/Default Address: (utest1[0-9a-z]+)/)?.[1];
+  const ufvk = accounts.match(/(uview(?:test)?1[0-9a-z]+)/)?.[1];
+  const address = addresses.match(/Default Address: (u(?:test)?1[0-9a-z]+)/)?.[1];
   return { ufvk, address, accounts, addresses };
 }
 
-export async function syncWallet(id) {
-  await run(['wallet', '-w', walletDir(id), 'sync'], 15 * 60_000);
+export async function syncWallet(id, net) {
+  await run(['wallet', '-w', walletDir(id), 'sync', ...serverArgs(net)], 15 * 60_000);
 }
 
 function decodeMemo(blob) {
