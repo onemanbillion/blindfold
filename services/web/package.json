@@ -1,0 +1,20 @@
+{
+  "name": "blindfold-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Blindfold auction house: website, coordinator and chain watcher.",
+  "scripts": {
+    "build": "esbuild client/main.js --bundle --format=esm --minify --sourcemap --target=es2022 --outfile=public/app.js",
+    "start": "node src/server.js",
+    "dev": "npm run build && node src/server.js"
+  },
+  "dependencies": {
+    "@blindfold/core": "file:../../packages/core",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  },
+  "license": "MIT"
+}
