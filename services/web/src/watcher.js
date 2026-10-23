@@ -55,10 +55,13 @@ async function probeServers() {
 
 function run(args, timeoutMs) {
   return new Promise((resolve, reject) => {
-    execFile(BIN, args, { timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024, env: { ...process.env, RUST_LOG: process.env.RUST_LOG || 'info' } }, (err, stdout, stderr) => {
+    const child = execFile(BIN, args, { timeout: timeoutMs, maxBuffer: 16 * 1024 * 1024, env: { ...process.env, RUST_LOG: process.env.RUST_LOG || 'info' } }, (err, stdout, stderr) => {
       if (err) reject(new Error(`zcash-devtool ${args[3] || ''} failed: ${(stderr || err.message).slice(-1500)}`));
       else resolve(stdout);
     });
+    // Commands that would prompt (init reads a mnemonic from stdin) get an empty line:
+    // for init, that means "generate a new one".
+    child.stdin?.end('\n');
   });
 }
 
