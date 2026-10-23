@@ -18,7 +18,23 @@ const WALLETS = join(DATA_DIR, 'wallets');
 mkdirSync(WALLETS, { recursive: true });
 
 export const watcherAvailable = () =>
-  new Promise((resolve) => execFile(BIN, ['--help'], (err) => resolve(!err)));
+  new Promise((resolve) => execFile(BIN, ['--help'], (err) => {
+    resolve(!err);
+    if (!err && process.env.SELFTEST_ON_BOOT === '1') probeServers();
+  }));
+
+/** Operator self-test: confirm each network's lightwalletd servers answer, and log the result. */
+async function probeServers() {
+  for (const net of ['main', 'test']) {
+    const t0 = Date.now();
+    try {
+      const w = await createTestnetWallet(net);
+      console.log(`[selftest] lightwalletd ${net} (${SERVERS[net]}): ok in ${Date.now() - t0} ms${w.address ? '' : ', no address'}`);
+    } catch (err) {
+      console.log(`[selftest] lightwalletd ${net} (${SERVERS[net]}): FAILED after ${Date.now() - t0} ms ${err.message.slice(-300)}`);
+    }
+  }
+}
 
 function run(args, timeoutMs) {
   return new Promise((resolve, reject) => {
