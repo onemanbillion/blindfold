@@ -176,7 +176,7 @@ async function syncAuction(a) {
   if (syncing.has(a.id)) return;
   syncing.add(a.id);
   try {
-    await syncWallet(a.id);
+    await syncWallet(a.id, a.mode);
     const w = readWallet(a.id);
     if (w) ingest(a, w);
   } catch (err) {
