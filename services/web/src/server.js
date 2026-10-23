@@ -164,17 +164,15 @@ async function createAuction(req) {
     if (networkOf(address) !== net || !/^u/.test(address)) throw new HttpError(400, 'the address must be a unified address on the same network as the viewing key');
     const blocks = Math.min(Math.max(Number(b.durationBlocks) || 1152, 24), 8064);
     const settleBlocks = Math.min(Math.max(Number(b.settleBlocks) || 576, 48), 4032);
-    let birthday;
+    let tip;
     try {
-      ({ birthday } = await setUpWallet(id, ufvk));
+      ({ tip } = await setUpWallet(id, ufvk, net));
     } catch (e) { throw new HttpError(400, `could not load that viewing key: ${e.message.slice(0, 200)}`); }
     db.prepare(`INSERT INTO auctions (id, created, mode, item, seller_address, ufvk, seller_pub, seller_token_hash,
       deposit_zat, min_bid_zat, reserve_zat, start_height, end_height, settle_blocks, status)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,'open')`).run(
       id, base.created, net, base.item, address, ufvk, sellerPub, base.seller_token_hash,
-      base.deposit_zat, base.min_bid_zat, base.reserve_zat, birthday, birthday + blocks, settleBlocks);
-    db.prepare('INSERT INTO chain VALUES (?,?,?) ON CONFLICT(network) DO UPDATE SET tip=MAX(tip, excluded.tip), at=excluded.at')
-      .run(net, birthday, now());
+      base.deposit_zat, base.min_bid_zat, base.reserve_zat, tip, tip + blocks, settleBlocks);
   }
   logEvent(id, 'created', { mode });
   return { auction: publicAuction(getAuction(id), { full: true }), sellerToken };
