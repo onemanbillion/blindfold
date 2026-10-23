@@ -1,0 +1,7 @@
+node_modules/
+data/
+*.db
+services/web/public/app.js
+services/web/public/app.js.map
+.env
+__pycache__/

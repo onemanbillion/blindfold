@@ -1,0 +1,17 @@
+{
+  "name": "@blindfold/core",
+  "version": "0.1.0",
+  "description": "Sealed-bid auctions for Zcash where no one sees the bids: MPC-compatible secret sharing, BF1 memos, receipts and ZIP 321 payment requests.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": { ".": "./src/index.js" },
+  "files": ["src"],
+  "scripts": { "test": "node --test test/*.test.js" },
+  "keywords": ["zcash", "auction", "mpc", "sealed-bid", "privacy", "zip321"],
+  "license": "MIT",
+  "dependencies": {
+    "@noble/ciphers": "^2.0.0",
+    "@noble/curves": "^2.0.0",
+    "@noble/hashes": "^2.0.0"
+  }
+}
