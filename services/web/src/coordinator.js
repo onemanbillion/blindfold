@@ -197,7 +197,9 @@ export async function tick() {
     if (cur.status === 'open') {
       const due = cur.mode === 'sandbox' ? now() >= cur.ends_at : (tipFor(cur.mode)?.tip || 0) >= cur.end_height + CONFIRMATIONS;
       if (due) closeAuction(cur.id);
-    } else if (cur.status === 'settling_retry') {
+    } else if (cur.status === 'settling_retry' || cur.status === 'closing') {
+      // closeAuction ignores the call if a session for this auction is already running;
+      // this resumes one interrupted by a restart.
       closeAuction(cur.id);
     } else if (cur.status === 'settling') {
       const late = cur.mode === 'sandbox' ? now() > r.settleBy : (tipFor(cur.mode)?.tip || 0) > r.settleByHeight;
